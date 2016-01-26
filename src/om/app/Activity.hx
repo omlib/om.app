@@ -4,8 +4,8 @@ import js.Browser.console;
 import js.Browser.document;
 import js.Browser.window;
 import js.html.Element;
-import js.html.DivElement;
 import js.html.PopStateEvent;
+import om.html.DivElement;
 
 using StringTools;
 
@@ -20,6 +20,9 @@ enum ActivityState {
     destroy;
 }
 
+/**
+    A single, focused thing that the user can do.
+*/
 class Activity {
 
     public static inline var NAME_POSTFIX = 'Activity';
@@ -44,11 +47,25 @@ class Activity {
             #if debug
                 else trace( 'Activity class name should end with "Activity"' );
             #end
+
+            //TODO
+            // MediaSet -> media_set
+            // UIElement -> ui_element
+            // Any_ ->
+
+            //var expr = ~/([A-Z])/;
+            //cName = expr.replace( cName, '#');
+
             id = cName.toLowerCase();
+
+        } else {
+            //TODO validate id conformity
         }
+
         this.id = id;
 
-        element = document.createDivElement();
+        //element = document.createDivElement();
+        element =  new DivElement();
         element.classList.add( 'activity' );
         element.id = id;
 
@@ -97,8 +114,11 @@ class Activity {
         activity.container = container;
         activity.onCreate();
         activity.onStart();
+
         onPause();
+
         activity.onResume();
+
         onStop();
         onDestroy();
 
@@ -113,8 +133,10 @@ class Activity {
 
         __log__( 'pop: '+id );
 
+        trace(stack);
+
         if( stack.length < 2 ) {
-            __log__( 'no prev activity' );
+            __log__( 'no previous activity' );
 
         } else {
 
@@ -158,8 +180,6 @@ class Activity {
 
         window.addEventListener( 'popstate', handlePopState, false );
 
-        //app.dom.appendChild( dom );
-        //document.body.appendChild( element ); //TODO
         container.appendChild( element );
 
         //dom.classList.remove( 'pause' );
@@ -227,7 +247,7 @@ class Activity {
         //pop();
 
         if( stack.length < 2 ) {
-            trace( 'No prev activity' );
+            trace( 'no previous activity' );
             //return false;
 
         } else {
@@ -250,20 +270,19 @@ class Activity {
 
     ////////////////////////////////////////////////////////////////////////////
 
-    inline function appendChild( child : Element ) {
-        element.appendChild( child );
-    }
-
-    ////////////////////////////////////////////////////////////////////////////
+    //inline function __log__change(  ) {
 
     inline function __log__( msg : String ) {
-        #if activity_debug console.debug( msg ); #end
+        #if activity_debug
+        console.debug( msg );
+        #end
     }
 
     ////////////////////////////////////////////////////////////////////////////
 
-    function boot( ?container : Element ) {
+    public function boot( ?container : Element ) {
         this.container = (container != null) ? container : document.body;
+        stack.push( this );
         onCreate();
         onStart();
     }
