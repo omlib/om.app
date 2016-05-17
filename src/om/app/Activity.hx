@@ -4,8 +4,9 @@ import js.Browser.console;
 import js.Browser.document;
 import js.Browser.window;
 import js.html.Element;
+import js.html.DivElement;
 import js.html.PopStateEvent;
-import om.html.DivElement;
+//import om.html.DivElement;
 
 using StringTools;
 
@@ -23,9 +24,12 @@ enum ActivityState {
 /**
     A single, focused thing that the user can do.
 */
+//@:autoBuild(om.app.macro.BuildActivity.build())
 class Activity {
 
     public static inline var NAME_POSTFIX = 'Activity';
+
+    public static var current(default,null) : Activity;
 
     static var stack = new Array<Activity>();
 
@@ -64,13 +68,17 @@ class Activity {
 
         this.id = id;
 
-        //element = document.createDivElement();
-        element =  new DivElement();
+        element = document.createDivElement();
+        //element =  new DivElement();
         element.classList.add( 'activity' );
         element.id = id;
 
         state = init;
     }
+
+	////////////////////////////////////////////////////////////////////////////
+
+	//public function update( time : Float ) {}
 
     ////////////////////////////////////////////////////////////////////////////
 
@@ -190,6 +198,8 @@ class Activity {
 
         __log__( '===== $id onResume' );
 
+		current = this;
+
         handleStateChange( resume );
         //dom.classList.remove( 'pause' );
         //dom.classList.add( 'resume' );
@@ -198,6 +208,8 @@ class Activity {
     function onPause() {
 
         __log__( '===== $id onPause' );
+
+		current = null;
 
         handleStateChange( pause );
         //dom.classList.remove( 'resume' );
@@ -278,12 +290,15 @@ class Activity {
         #end
     }
 
-    ////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////
 
-    public function boot( ?container : Element ) {
-        this.container = (container != null) ? container : document.body;
-        stack.push( this );
-        onCreate();
-        onStart();
-    }
+	public function boot( ?container : Element ) : Activity {
+		this.container = (container != null) ? container : document.body;
+		stack.push( this );
+		onCreate();
+		onStart();
+		onResume();
+		return this;
+	}
+
 }

@@ -1,6 +1,4 @@
 
-# Om.app
+# OM|APP
 
-
-### Haxe Defines
-* `activity_debug` Print activity change information to console.
+Web application framework.
