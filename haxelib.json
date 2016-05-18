@@ -10,7 +10,6 @@
     "classPath" : "src/",
     "dependencies": {
         "om.core":"",
-        "om.html":"",
         "om.io":"",
         "thx.semver":""
     }
