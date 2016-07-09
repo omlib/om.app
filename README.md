@@ -1,4 +1,4 @@
 
 # OM|APP
 
-Web application framework.
+Web application base.
