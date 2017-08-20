@@ -5,8 +5,9 @@ import sys.FileSystem;
 import sys.io.File;
 
 typedef Data = {
+    var platform : String;
     var build : Int;
-    var time : Float;
+    var time : String;
     var version : String;
     var total : Int;
 }

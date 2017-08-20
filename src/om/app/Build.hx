@@ -51,7 +51,6 @@ class Build {
 
         app.debug = getDefine( 'debug', false );
         app.release = getDefine( 'release', false );
-        //app.clean = getDefine( 'clean', false );
 
         if( app.release ) {
             if( app.debug ) {
@@ -75,12 +74,6 @@ class Build {
         default:
         }
 
-        //trace( out );
-
-        //Compiler.define( app.platform, '1' );
-        Compiler.define( 'platform', app.platform );
-        Compiler.define( app.platform );
-
         meta = Meta.read();
         if( meta == null ) {
             meta = cast { build: 1, total: 1 }
@@ -93,15 +86,22 @@ class Build {
             }
         }
 
-        meta.time = Date.now().getTime();
+        meta.time = Date.now().toString();
         meta.version = app.version;
 
         app.version = app.version + '.' + meta.build;
 
         var clean = getDefine( 'clean' ) == '1';
+        if( meta.platform != app.platform ) clean = true;
+
+        meta.platform = app.platform;
+
         if( clean ) {
             FileUtil.deleteDirectory( out );
         }
+
+        Compiler.define( app.platform );
+        Compiler.define( 'platform', app.platform );
 
         Context.onAfterGenerate( function(){
 
