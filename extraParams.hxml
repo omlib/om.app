@@ -1,3 +1,2 @@
--js app.js
 -cp src
---macro om.app.Build.app()
+--macro om.app.Build.run()

@@ -1,4 +1,5 @@
 _*
 doc/
-test/*.js*
-TODO.md
+examples/*/*js*
+examples/*/*n
+TODO*
