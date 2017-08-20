@@ -6,19 +6,22 @@ import haxe.macro.Context;
 import haxe.macro.Compiler;
 import haxe.macro.Expr;
 import haxe.macro.ExprTools;
-import om.io.FileSync.*;
+//import om.io.FileSync.*;
 import om.io.FileUtil;
 import sys.FileSystem;
 import sys.io.File;
 import Sys.println;
 
 using om.Path;
+using om.io.FileUtil;
 
 class Build {
 
     public static inline var DEFINE_PREFIX = '';
     public static inline var RES = 'res';
     public static inline var OUT = 'bin';
+
+    public static var TEXT_FILE_EXTENSIONS = ['html','json','txt'];
 
     public static var verbose = false;
 
@@ -59,7 +62,6 @@ class Build {
         }
 
         //out = '$out/${app.platform}';
-        //trace( out );
         //trace( Compiler.getOutput() );
 
         switch app.platform {
@@ -156,12 +158,6 @@ class Build {
         File.saveContent( '$out/$file', html );
     }
 
-    /*
-    static function display() {
-        return "DISPLAY";
-    }
-    */
-
     static function buildPlatform() {
 
         switch app.platform {
@@ -176,17 +172,76 @@ class Build {
             //TODO
 
         case electron:
-            syncFile( '$res/html/app.html', '$out/app.html' );
-            syncFile( '$res/electron/package.json', '$out/package.json' );
+            //syncFile( '$res/html/app.html', '$out/app.html' );
+            //syncFile( '$res/electron/package.json', '$out/package.json' );
+            //syncTextFile( '$res/electron/package.json', '$out/package.json' );
 
         case web:
-            syncFile( '$res/web/htaccess', '$out/.htaccess' );
             syncFile( '$res/html/index.html', '$out/index.html' );
             syncFile( '$res/web/manifest.json', '$out/manifest.json' );
+            syncFile( '$res/web/htaccess', '$out/.htaccess' );
 
-        //case _:
         }
     }
+
+    //static function resolvePath( path : String ) : String {}
+
+    static function syncFile( src : String, dst : String ) {
+        if( !FileSystem.exists( src ) )
+            return;
+        if( isTextFile( src ) ) {
+            syncTextFile( src, dst );
+        } else {
+            syncBinaryFile( src, dst );
+        }
+    }
+
+    static function syncTextFile( src : String, dst : String ) {
+        if( !FileSystem.exists( src ) )
+            return;
+        var content = new Template( File.getContent( src ) ).execute( app );
+        var file = File.write( dst );
+        file.writeString( content );
+        file.close();
+    }
+
+    static function syncBinaryFile( src : String, dst : String ) {
+        if( needsUpdate( src, dst ) )
+            File.copy( src, dst );
+    }
+
+    static function syncDirectory( src : String, dst : String, recursive = true ) : Bool {
+
+        if( !fileExists( src ) )
+			return false;
+
+        if( !fileExists( dst ) ) FileSystem.createDirectory( dst );
+
+        for( f in FileSystem.readDirectory( src ) ) {
+            var sp = '$src/$f';
+			var dp = '$dst/$f';
+			if( FileSystem.isDirectory( sp ) ) {
+				//if( !exists( dst ) ) createDirectory( dst );
+				if( recursive ) syncDirectory( sp, dp );
+			} else {
+				if( fileExists( dp ) ) {
+					if( needsUpdate( sp, dp ) ) syncFile( sp, dp );
+				} else {
+					syncFile( sp, dp );
+				}
+			}
+        }
+
+        return true;
+    }
+
+    static inline function fileExists( path : String ) {
+        return FileSystem.exists( path );
+    }
+
+    static function needsUpdate( src : String, dst : String ) : Bool {
+		return fileExists( dst ) ? src.modTime() > dst.modTime() : true;
+	}
 
     static function lessc( src : String, dst : String ) {
 		var exe = new sys.io.Process( 'lessc', [src,dst] );
@@ -197,6 +252,15 @@ class Build {
 			println( exe.stderr.readAll() );
 		}
 	}
+
+    static function isTextFile( path : String ) : Bool {
+        var ext = path.extension();
+        for( allowedExt in TEXT_FILE_EXTENSIONS ) {
+            if( ext == allowedExt )
+                return true;
+        }
+        return false;
+    }
 
 }
 
