@@ -1,6 +1,9 @@
 package om;
 
-#if macro
+#if !macro
+@:autoBuild(om.App.complete())
+interface App {}
+#else
 
 import Sys.println;
 import sys.FileSystem.*;
@@ -10,7 +13,6 @@ import haxe.macro.Compiler;
 import haxe.macro.Context;
 import haxe.macro.Expr;
 import om.Res;
-import om.app.Platform;
 import om.style.LessC;
 
 using om.Path;
@@ -189,9 +191,13 @@ class App {
     }
 }
 
-#else
-
-@:autoBuild(om.App.complete())
-interface App {}
-
 #end
+
+@:enum abstract Platform(String) from String to String {
+    var android = 'android';
+    //var atom = 'atom';
+    var chrome = 'chrome';
+    var electron = 'electron';
+    var nme = 'nme';
+    var web = 'web';
+}
