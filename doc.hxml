@@ -1,0 +1,11 @@
+--no-output
+-lib om.app
+om.App
+-dce no
+-D doc
+-D doc-gen
+--each
+
+--next
+-js x
+-xml doc/js.xml
