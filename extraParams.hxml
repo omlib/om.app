@@ -1,2 +1,2 @@
--cp src
---macro om.app.Build.run()
+-D om_app
+--macro om.App.build()

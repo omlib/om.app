@@ -5,5 +5,6 @@ package om.app;
     //var atom = 'atom';
     var chrome = 'chrome';
     var electron = 'electron';
+    var nme = 'nme';
     var web = 'web';
 }

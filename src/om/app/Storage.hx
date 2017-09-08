@@ -23,12 +23,12 @@ class Storage {
         storage.setItem( prefix + key, Json.stringify( value ) );
     }
 
-    public inline function clear() {
-        storage.clear();
-    }
-
     public inline function key( index : Int ) : String {
         return storage.key( index );
+    }
+
+    public inline function clear() {
+        storage.clear();
     }
 
 }

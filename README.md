@@ -1,10 +1,11 @@
 
 # OM.APP
 
-Web application core.
+> Web application base.
 
 
-### Defines
+
+### Compiler Defines
 
 * `name=<string>` Application name.
 * `platform=<android|chrome|electron|web>` Target platform.
@@ -12,6 +13,5 @@ Web application core.
 * `version_code=<0>` Release version.
 * `dev` Development build mode.
 * `release` Release build mode.
-
 * `desktop` Added when building desktop device type platforms (electron).
 * `mobile` Added when building mobile device type platforms (android).
