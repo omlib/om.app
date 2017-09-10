@@ -1,2 +1,3 @@
 -D om_app
+-D source-header=
 --macro om.App.build()
