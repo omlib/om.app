@@ -4,14 +4,17 @@
 > Web application base.
 
 
-
 ### Compiler Defines
 
-* `name=<string>` Application name.
-* `platform=<android|chrome|electron|web>` Target platform.
-* `version=<0.0.0>` Software version.
-* `version_code=<0>` Release version.
-* `dev` Development build mode.
-* `release` Release build mode.
-* `desktop` Added when building desktop device type platforms (electron).
-* `mobile` Added when building mobile device type platforms (android).
+* `om_name=<string>` Application name.
+* `om_platform=<android|chrome|electron|web>` Target platform.
+* `om_version=<0.0.0>` Software version.
+* `om_version_code=<0>` Release version.
+
+* `om_dev` Development build mode.
+* `om_release` Release build mode.
+
+* `om_lessc_clean`
+
+* `om_desktop` Added when building desktop device type platforms (electron).
+* `om_mobile` Added when building mobile device type platforms (android).

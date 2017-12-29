@@ -1,6 +1,4 @@
 _*
 bin/
 doc/
-examples/*/*js*
-examples/*/*n
-TODO*
+example/*.js*
