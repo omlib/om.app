@@ -1,10 +1,18 @@
 package om.app;
 
-@:enum abstract Platform(String) from String to String {
-    var android = 'android';
-    //var atom = 'atom';
-    var chrome = 'chrome';
-    var electron = 'electron';
-    var nme = 'nme';
-    var web = 'web';
+enum abstract Platform(String) from String to String {
+
+	var Android = "android";
+    var Chrome = "chrome";
+    var Electron = "electron";
+    var Web = "web";
+
+	/*
+	public static inline var THIS =
+		#if android Android
+		#elseif chrome_app Chrome
+		#elseif electron Electron
+		#else Web
+		#end;
+		*/
 }

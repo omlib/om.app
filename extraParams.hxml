@@ -1,2 +1,2 @@
 -cp src
-#--macro om.App.build()
+--macro om.App.build()

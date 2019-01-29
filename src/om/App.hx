@@ -1,112 +1,110 @@
 package om;
 
 #if macro
-
 import haxe.macro.Context;
 import haxe.macro.Expr;
-import haxe.format.JsonPrinter;
-import om.Res;
-
+import sys.FileSystem;
+import Sys.println;
+import om.app.Platform;
 using om.Path;
+#end
+
+#if macro
 
 class App {
 
-    public static inline var BIN = 'bin';
-    public static inline var RES = 'res';
+	public static var NAME(default,null) : String;
+	public static var VERSION(default,null) = "0.0.0";
+	public static var RELEASE(default,null) = 0;
+	public static var REVISION(default,null) = 0;
+	public static var PLATFORM(default,null) : Platform;
+	//public static var BUILDTIME(default,null) = Date.now().toString();
 
-    static var context : Dynamic;
+	static function build() {
 
-    static function complete() : Array<Field> {
-        var fields = Context.getBuildFields();
+		var cwd = Sys.getCwd();
+
+		NAME = getFlag( 'NAME', cwd.directory().withoutDirectory() );
+		VERSION = getFlag( 'VERSION', VERSION );
+		RELEASE = getIntFlag( 'RELEASE', RELEASE );
+		REVISION = getIntFlag( 'REVISION', REVISION );
+		PLATFORM = getFlag( 'PLATFORM' );
+		if( PLATFORM == null ) {
+			PLATFORM = if( isDefined( 'android' ) ) Android;
+			else if( isDefined( 'electron' ) ) Electron;
+			else if( isDefined( 'chrome_app' ) ) Chrome;
+			else Web;
+		}
+
+		Context.onAfterGenerate( function(){
+			//Sys.println( '23' );
+		});
+	}
+
+	static function complete() : Array<Field> {
+
+		var fields = Context.getBuildFields();
+		var pos = Context.currentPos();
+
+		fields.push({
+			name : "NAME",
+			access : [APublic,AStatic,AInline],
+			kind: FVar( macro : String, macro $v{NAME} ),
+			meta : [{ name : ':keep', pos : pos }],
+			pos : pos
+		});
+		fields.push({
+			name : "VERSION",
+			access : [APublic,AStatic,AInline],
+			kind: FVar( macro : String, macro $v{VERSION} ),
+			meta : [{ name : ':keep', pos : pos }],
+			pos : pos
+		});
+		fields.push({
+			name : "RELEASE",
+			access : [APublic,AStatic,AInline],
+			kind: FVar( macro : Int, macro $v{RELEASE} ),
+			meta : [{ name : ':keep', pos : pos }],
+			pos : pos
+		});
+		fields.push({
+			name : "REVISION",
+			access : [APublic,AStatic,AInline],
+			kind: FVar( macro : Int, macro $v{REVISION} ),
+			meta : [{ name : ':keep', pos : pos }],
+			pos : pos
+		});
+		fields.push({
+			name : "PLATFORM",
+			access : [APublic,AStatic,AInline],
+			kind: FVar( macro : om.app.Platform, macro $v{PLATFORM} ),
+			meta : [{ name : ':keep', pos : pos }],
+			pos : pos
+		});
+		/*
+		fields.push({
+			name : "BUILDTIME",
+			access : [APublic,AStatic,AInline],
+			kind: FVar( macro : String, macro $v{Date.now().toString()} ),
+			meta : [{ name : ':keep', pos : pos }],
+			pos : pos
+		});
+		*/
+
         return fields;
-    }
+	}
 
-    static function __init__() {
+	static inline function isDefined( key : String ) : Bool
+        return Context.defined( key );
 
-        var path = Fs.cwd();
-        var name = getDefine( 'om_app_name', path.withoutDirectory() );
-        var version = getDefine( 'om_app_version', '0.0.0' );
+	static function getFlag( key : String, ?def : String ) : String
+        return isDefined( key ) ? Context.definedValue( key ) : def;
 
-        var platform = getDefine( 'om_app_platform' );
-        if( platform == null ) platform = if( isDefined( 'android' ) || isDefined( 'om_android' ) ) 'android';
-            else if( isDefined( 'electron' ) ) 'electron';
-            else 'web';
+	static function getIntFlag( key : String, ?def : Int ) : Int
+        return isDefined( key ) ? Std.parseInt( Context.definedValue( key ) ) : def;
 
-        context = {
-            name : name,
-            version: version,
-            debug: isDefined( 'debug' ),
-            release: isDefined( 'release' ),
-            platform: platform
-        };
-
-        if( context.release ) {
-            if( context.debug )
-                Context.warning( 'debug flag set in release mode', Context.currentPos() );
-
-        }
-
-        if( context.debug ) {
-        }
-
-        var clean = isDefined( 'clean' );
-        if( clean ) {
-            Fs.deleteDirectoryRecursive( BIN );
-        }
-
-        /*
-        var meta : Dynamic;
-        if( Fs.exists( '.om/build.json' ) ) {
-            meta = Json.parse( Fs.getContent( '.om/build.json' ) );
-            meta.build++;
-        } else {
-            meta = {};
-            for( f in Reflect.fields( context ) )
-                Reflect.setField( meta, f, Reflect.field( context, f ) );
-            meta.build = 0;
-        }
-        //trace(meta); 
-        */
-
-        //om.Res.init( RES );
-
-        Context.onAfterGenerate( function(){
-
-            //Template.globals = context;
-
-            //Context.registerModuleDependency( 'gamma.App', 'res/style/app.less' );
-
-            /*
-            var style = Res.find( 'style', ['app',name] );
-            if( style != null ) {
-                //trace(style);
-            }
-            */
-
-            switch platform {
-            case 'android':
-                Res.build( 'html', 'app', 'app.html', context );
-            case 'electron':
-                Res.build( 'html', 'app', 'app.html', context );
-                Res.build( 'electron', 'package.json', 'package.json', context );
-            case 'web':
-                Res.build( 'html', 'app', 'index.html', context );
-            }
-
-            //if( !Fs.exists( '.om' ) ) Fs.createDirectory( '.om' );
-            //Fs.saveContent( '.om/build.json', JsonPrinter.print( meta, '\t' ) );
-
-            Sys.println( '${context.name}-${context.platform}-${context.version}' );
-        });
-    }
-
-    static function isDefined( key : String, default_ = false, prefix = true ) : Bool {
-        return Context.defined( key ) ? true : default_;
-    }
-
-    static function getDefine<T>( key : String, ?default_ : T, prefix = true ) : T {
-        return Context.defined( key ) ? cast Context.definedValue( key ) : default_;
-    }
+	static function getFloatFlag( key : String, ?def : Float ) : Float
+        return isDefined( key ) ? Std.parseFloat( Context.definedValue( key ) ) : def;
 
 }
 

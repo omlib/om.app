@@ -6,5 +6,10 @@ om.App
 --each
 
 --next
+--interp
+-xml doc/interp.xml
+
+--next
 -js x
 -xml doc/js.xml
+--macro include('om.app')
