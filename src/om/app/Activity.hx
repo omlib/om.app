@@ -1,13 +1,14 @@
 package om.app;
 
-import js.Browser.console;
-import js.Browser.document;
-import js.Browser.window;
-import js.Promise;
 import js.html.Element;
 import js.html.PopStateEvent;
+import om.Browser.document;
+import om.Browser.console;
+import om.Browser.history;
+import om.Browser.window;
+import om.Promise;
 
-enum abstract State(String) to String {
+private enum abstract State(String) to String {
 	var create;
 	var start;
 	var resume;
@@ -16,35 +17,38 @@ enum abstract State(String) to String {
 	var destroy;
 }
 
-/*
 #if !macro
-@:autoBuild(letter.app.Activity.build())
+@:autoBuild(om.app.Build.activity())
 #end
-*/
 class Activity {
 
 	public final id : String;
+	public final element : Element;
 
 	public var state(default,null) : State;
-
-	final element : Element;
-
-	var parent : Activity;
+	public var parent(default,null) : Activity;
 
 	public function new( ?id : String, ?element : Element ) {
+		var cl = Type.getClass( this );
+		this.id = (id == null) ? getActivityClassId( cl ) : id;
 		this.element = (element == null) ? document.createDivElement() : element;
 		this.element.classList.add( 'activity' );
-		var cl = Type.getClass( this );
-		this.id = this.element.id = (id == null) ? getActivityClassId( cl ) : id;
+		//TODO: createid, sid in build macro
+		//this.element.id = (id == null) ? getActivityClassId( cl ) : id;
+		//this.element.setAttribute( 'data-activity', this.id );
+		this.element.classList.add( 'activity-'+this.id );
 		var sid = getActivityClassId( cast Type.getSuperClass( cl ) );
 		if( sid.length > 0 ) this.element.classList.add( sid );
 	}
 
-	function onCreate<T:Activity>() : Promise<T>
-		return Promise.resolve( cast this );
+	//TODO all return Promise (?)
 
-	function onStart<T>() : Promise<T>
+	function onCreate() {
+	}
+
+	function onStart<T>() : Promise<Null<T>>
 		return Promise.resolve( null );
+		//return Promise.nil();
 
 	function onResume() {
 	}
@@ -52,116 +56,130 @@ class Activity {
 	function onPause() {
 	}
 
-	function onStop<T>() : Promise<T>
+	function onStop<T>() : Promise<Null<T>>
 		return Promise.resolve( null );
 
 	function onDestroy() {
 	}
-
-	function replace<T>( next : Activity ) : Promise<T> {
+	
+	function replace<T>( activity : Activity ) : Promise<T> {
+		console.log( 'replace '+id+':'+activity.id );
 		setState( pause );
-		next.setState( create );
-		return next.onCreate().then( function(a:Activity) {
-			element.parentNode.appendChild( a.element );
-			a.setState( start );
-			setState( stop );
-			return Promise.race([
-				onStop().then( function(_){
-					element.remove();
-					setState( destroy );
-				}),
-				a.onStart().then( function(r){
-					a.setState( resume );
-					return r;
-				})
-			]);
+		activity.setState( create );
+		activity.parent = parent;
+		element.parentNode.appendChild( activity.element );
+		activity.setState( start );
+		setState( stop );
+		onStop().then( function(r){
+			element.remove();
+			setState( destroy );
+		});
+		return activity.onStart().then( function(r){
+			history.replaceState( {}, '' );
+			activity.setState( resume );
+			return r;
 		});
 	}
 
-	function push<T>( next : Activity ) : Promise<T> {
+	function push<T>( activity : Activity ) : Promise<T> {
+		console.log( 'replace '+id+':'+activity.id );
 		setState( pause );
-		next.setState( create );
-		return next.onCreate().then( function(a:Activity) {
-			a.parent = this;
-			element.parentNode.appendChild( a.element );
-			a.setState( start );
-			setState( stop );
-			return Promise.race([
-				onStop().then( function(_){
-					element.remove();
-				}),
-				a.onStart().then( function(r){
-					a.setState( resume );
-					return r;
-				})
-			]);
+		activity.setState( create );
+		activity.parent = this;
+		element.parentNode.appendChild( activity.element );
+		activity.setState( start );
+		/*
+		setState( stop );
+		onStop().then( function(r){
+			element.remove();
+			setState( destroy );
+		});
+		*/
+		//element.remove();
+		return activity.onStart().then( function(r){
+			element.remove();
+			history.pushState( {id:id}, '' );
+			activity.setState( resume );
+			return r;
 		});
 	}
 
 	function pop<T>() : Promise<T> {
 		if( parent == null )
 			return Promise.reject('no parent');
+		var activity = parent;
+		console.log( 'pop '+id+':'+activity.id );
 		setState( pause );
-		element.parentNode.appendChild( parent.element );
-		parent.setState( start );
+		element.parentNode.appendChild( activity.element );
+		history.replaceState( {id:activity.id}, '' );
+		activity.setState( resume );
 		setState( stop );
-		return cast Promise.race([
-			onStop().then( function(_){
-				element.remove();
-				setState( destroy );
-			}),
-			parent.onStart().then( function(r){
-				parent.setState( resume );
-				return r;
-			})
-		]);
+		return onStop().then( function(r){
+			element.remove();
+			setState( destroy );
+			return r;
+		});
+		/*
+		return activity.onStart().then( function(r){
+			activity.setState( resume );
+			return r;
+		});
+		*/
 	}
 
 	function setState( state : State ) {
 		if( this.state != null ) element.classList.remove( this.state );
 		element.classList.add( this.state = state );
 		switch state {
-		case pause: onPause();
-		case resume: onResume();
-		case destroy: onDestroy();
+		case create:
+			console.group( id, state );
+			onCreate();
+		case start:
+			console.info( id, state );
+		case resume:
+			console.info( id, state );
+			onResume();
+			window.addEventListener( 'popstate', handlePopState, false );
+		case pause:
+			console.info( id, state );
+			window.removeEventListener( 'popstate', handlePopState );
+		case stop:
+			console.info( id, state );
+		case destroy:
+			console.info( id, state );
+			parent = null;
+			onDestroy();
+			console.groupEnd();
 		default:
+			console.warn( '???' );
 		}
 	}
-
-	/*
-	function handleStatePop( e : PopStateEvent ) {
-		console.debug( e, window.history.state );
-		console.debug( id );
-		pop();
+	
+	function handlePopState( e : PopStateEvent ) {
+		console.debug( id, window.history.state, e );
+		if( parent == null ) {
+			trace('no parent');
+			console.debug( "NNN", history.state );
+		} else {
+			console.debug( ">>>>", parent.id, history.state );
+			pop();
+		}
+		/*
+		if( parent != null && parent.id == window.history.state.id ) {
+			pop();
+		}
+		*/
 	}
-	*/
 
-	//public static var currrent(default,null) : Activity;
-
-	public static function boot<T>( activity : Activity, ?element : Element ) : Promise<T> {
-
-		if( element == null ) element = document.body;
-
-	/*
-		window.addEventListener( "popstate", function(e){
-			console.debug(e,Activity.currrent.parent);
-			if( e.state == null && Activity.currrent.parent != null ) {
-				Activity.currrent.pop();
-			}
-			//console.debug(Activity.currrent.pop());
-			//return 
-		}, false );
-*/
-
+	public static function boot<T>( activity : Activity, ?container : Element ) : Promise<T> {
+		//if( activity.state != null )throw
+		if( container == null ) container = document.body;
 		activity.setState( create );
-		return activity.onCreate().then( function(a:Activity){
-			element.appendChild( a.element );
-			a.setState( start );
-			return a.onStart().then( function(r){
-				a.setState( resume );
-				//currrent = a;
-				return r;
-			});
+		container.appendChild( activity.element );
+		activity.setState( start );
+		return activity.onStart().then( function(r:T){
+			activity.setState( resume );
+			return r;
 		});
 	}
 
