@@ -4,11 +4,12 @@
     "description": "Web application base",
     "tags": ["om","app"],
     "url": "https://github.com/omlib/om.app",
-    "license": "OM",
+    "license": "Public",
     "contributors": ["tong"],
     "releasenote": "See CHANGELOG.md",
     "classPath" : "src/",
     "dependencies": {
-        "om.core": ""
+        "om.core": "",
+        "om.theme": ""
     }
 }
