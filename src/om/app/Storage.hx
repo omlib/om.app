@@ -56,6 +56,14 @@ abstract Storage(TStorage) {
 	@:arrayAccess public inline function set( key : String, value : String )
 		return this.set( key, value );
 
+	public inline function getItem<T>( key : String ) : T {
+		return Json.parse( get( key ) );
+	}
+
+	public inline function setItem<T>( key : String, item : T ) {
+		this.set( key, Json.stringify( item ) );
+	}
+
 	public inline function exists( key : String ) : Bool
 		return this.get( key ) != null;
 
