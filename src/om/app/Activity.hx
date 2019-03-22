@@ -63,10 +63,12 @@ class Activity {
 	}
 	
 	function replace<T>( activity : Activity ) : Promise<T> {
+		#if om_activity_console
 		console.log( 'replace '+id+':'+activity.id );
+		#end
 		setState( pause );
-		activity.setState( create );
 		activity.parent = parent;
+		activity.setState( create );
 		element.parentNode.appendChild( activity.element );
 		activity.setState( start );
 		setState( stop );
@@ -75,17 +77,21 @@ class Activity {
 			setState( destroy );
 		});
 		return activity.onStart().then( function(r){
-			history.replaceState( {}, '' );
 			activity.setState( resume );
+			#if om_activity_history
+			history.replaceState( {}, '' );
+			#end
 			return r;
 		});
 	}
 
 	function push<T>( activity : Activity ) : Promise<T> {
+		#if om_activity_console
 		console.log( 'replace '+id+':'+activity.id );
+		#end
 		setState( pause );
-		activity.setState( create );
 		activity.parent = this;
+		activity.setState( create );
 		element.parentNode.appendChild( activity.element );
 		activity.setState( start );
 		/*
@@ -98,7 +104,9 @@ class Activity {
 		//element.remove();
 		return activity.onStart().then( function(r){
 			element.remove();
+			#if om_activity_history
 			history.pushState( {id:id}, '' );
+			#end
 			activity.setState( resume );
 			return r;
 		});
@@ -108,10 +116,16 @@ class Activity {
 		if( parent == null )
 			return Promise.reject('no parent');
 		var activity = parent;
+		#if om_activity_console
 		console.log( 'pop '+id+':'+activity.id );
+		#end
 		setState( pause );
 		element.parentNode.appendChild( activity.element );
+		/*
+		#if om_activity_history
 		history.replaceState( {id:activity.id}, '' );
+		#end
+		*/
 		activity.setState( resume );
 		setState( stop );
 		return onStop().then( function(r){
@@ -132,29 +146,55 @@ class Activity {
 		element.classList.add( this.state = state );
 		switch state {
 		case create:
+			#if om_activity_console
 			console.group( id, state );
+			#end
 			onCreate();
 		case start:
+			#if om_activity_console
 			console.info( id, state );
-		case resume:
-			console.info( id, state );
-			onResume();
-			window.addEventListener( 'popstate', handlePopState, false );
+			#end
 		case pause:
+			#if om_activity_console
 			console.info( id, state );
+			#end
+			onPause();
+			/*
+			#if om_activity_history
 			window.removeEventListener( 'popstate', handlePopState );
+			#end
+			*/
+		case resume:
+			#if om_activity_console
+			console.info( id, state );
+			#end
+			onResume();
+			/*
+			#if om_activity_history
+			window.addEventListener( 'popstate', handlePopState, false );
+			#end
+			*/
 		case stop:
+			#if om_activity_console
 			console.info( id, state );
+			#end
 		case destroy:
+			#if om_activity_console
 			console.info( id, state );
+			#end
 			parent = null;
 			onDestroy();
+			#if om_activity_console
 			console.groupEnd();
+			#end
 		default:
 			console.warn( '???' );
 		}
 	}
 	
+	/*
+	#if om_activity_history
+
 	function handlePopState( e : PopStateEvent ) {
 		console.debug( id, window.history.state, e );
 		if( parent == null ) {
@@ -168,8 +208,10 @@ class Activity {
 		if( parent != null && parent.id == window.history.state.id ) {
 			pop();
 		}
-		*/
+		* /
 	}
+	#end
+	*/
 
 	public static function boot<T>( activity : Activity, ?container : Element ) : Promise<T> {
 		//if( activity.state != null )throw
