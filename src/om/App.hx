@@ -1,11 +1,14 @@
 package om;
 
 #if macro
+import haxe.Template;
 import haxe.macro.Context;
 import haxe.macro.Expr;
 import sys.FileSystem;
+import sys.io.File;
 import Sys.println;
 import om.app.Platform;
+using haxe.macro.ExprTools;
 using om.Path;
 #end
 
@@ -20,7 +23,7 @@ class App {
 	public static var PLATFORM(default,null) : Platform;
 	//public static var BUILDTIME(default,null) = Date.now().toString();
 
-	static function build() {
+	static function __build__() {
 
 		var cwd = Sys.getCwd();
 
@@ -41,10 +44,30 @@ class App {
 		});
 	}
 
-	static function complete() : Array<Field> {
+	static function __complete__() : Array<Field> {
 
 		var fields = Context.getBuildFields();
 		var pos = Context.currentPos();
+		var cl = Context.getLocalClass().get();
+
+		var ctx = { platform : PLATFORM };
+
+		/*
+		//trace("TODO create platform specific index.html");
+		if( cl.meta.has(':html') ) {
+			//trace( cl.meta.extract(':html')[0].params[0].getValue() );
+			//var path = cl.meta.extract(':html')[0].params[0].getValue();
+			//trace(path);
+			//trace(ctx);
+			var src = 'res/html/index.html';
+			var dst = 'app/index.html';
+			if( FileSystem.exists( src ) ) {
+				var html = new Template( File.getContent( src ) ).execute( ctx );
+				//trace(html);
+				File.saveContent( dst, html );
+			}
+		}
+		*/
 
 		fields.push({
 			name : "NAME",
@@ -109,6 +132,12 @@ class App {
 }
 
 #else
-@:autoBuild(om.App.complete())
+
+#if android
+import om.android.App;
+#end
+
+@:autoBuild(om.App.__complete__())
 interface App {}
+
 #end

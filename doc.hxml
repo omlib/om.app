@@ -8,8 +8,10 @@ om.App
 --next
 --interp
 -xml doc/interp.xml
+#--macro include('om.app')
 
 --next
 -js x
 -xml doc/js.xml
 --macro include('om.app')
+

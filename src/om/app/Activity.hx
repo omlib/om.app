@@ -17,6 +17,9 @@ private enum abstract State(String) to String {
 	var destroy;
 }
 
+/**
+	A single focused thing.
+**/
 #if !macro
 @:autoBuild(om.app.Build.activity())
 #end
@@ -41,14 +44,11 @@ class Activity {
 		if( sid.length > 0 ) this.element.classList.add( sid );
 	}
 
-	//TODO all return Promise (?)
-
 	function onCreate() {
 	}
 
 	function onStart<T>() : Promise<Null<T>>
 		return Promise.resolve( null );
-		//return Promise.nil();
 
 	function onResume() {
 	}
